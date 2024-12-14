@@ -167,9 +167,9 @@ class ObjectDetectorHelper(
         val scaledBitmap = Bitmap.createScaledBitmap(
             processBitmap, dstWidth.toInt(), height, true
         )
-
         val paint = Paint(Paint.FILTER_BITMAP_FLAG)
         val left = (width - dstWidth) / 2
+
         canvas.drawBitmap(scaledBitmap, left, 0f, paint)
         return bitmapWithBackground
     }
@@ -214,19 +214,19 @@ class ObjectDetectorHelper(
         val boundingBoxList = getBoundingBoxList(locations, width, scaleRatio)
 
         val detections = mutableListOf<Detection>()
-        for (i in 0..<MAX_RESULTS_DEFAULT) {
-            val categoryIndex = categories[i].toInt()
+        for (i in 0 until maxResults) { // Verwende maxResults statt MAX_RESULTS_DEFAULT
+            val categoryIndex = categories.getOrNull(i)?.toInt() ?: -1
             detections.add(
                 Detection(
-                    label = labels[categoryIndex],
-                    boundingBox = boundingBoxList[i],
-                    score = scores[i]
+                    label = labels.getOrNull(categoryIndex) ?: "Unknown",
+                    boundingBox = boundingBoxList.getOrNull(i) ?: RectF(),
+                    score = scores.getOrNull(i) ?: 0f
                 )
             )
         }
 
         return detections
-            .filter { !it.boundingBox.isEmpty && it.score >= THRESHOLD_DEFAULT }
+            .filter { !it.boundingBox.isEmpty && it.score >= threshold } // Verwende threshold statt THRESHOLD_DEFAULT
             .sortedByDescending { it.score }
     }
 
@@ -247,26 +247,22 @@ class ObjectDetectorHelper(
             val bottomRatio = locations[i * 4 + 2]
             val rightRatio = locations[i * 4 + 3]
 
-            val top = topRatio.coerceAtLeast(0f).coerceAtMost(1f)
+            val top = topRatio.coerceIn(0f, 1f)
             val left =
-                ((leftRatio * width - padding) / actualWidth).coerceAtLeast(0f).coerceAtMost(1f)
-            val bottom = bottomRatio.coerceAtLeast(top).coerceAtMost(1f)
+                ((leftRatio * width - padding) / actualWidth).coerceIn(0f, 1f)
+            val bottom = bottomRatio.coerceIn(top, 1f)
             val right =
-                ((rightRatio * width - padding) / actualWidth).coerceAtLeast(left).coerceAtMost(1f)
+                ((rightRatio * width - padding) / actualWidth).coerceIn(left, 1f)
 
             val rectF = RectF(left, top, right, bottom)
             boundingBoxList[i] = rectF
         }
 
-        return boundingBoxList;
+        return boundingBoxList
     }
 
 
     companion object {
-        val MODEL_DEFAULT = Model.EfficientDetLite2
-        const val MAX_RESULTS_DEFAULT = 3
-        const val THRESHOLD_DEFAULT = 0.5F
-
         const val TAG = "ObjectDetectorHelper"
     }
 
@@ -277,7 +273,6 @@ class ObjectDetectorHelper(
     enum class Delegate(val value: Int) {
         CPU(0), NNAPI(1)
     }
-
 
     // Wraps results from inference, the time it takes for inference to be performed, and
     // the input image and height for properly scaling UI to return back to callers
