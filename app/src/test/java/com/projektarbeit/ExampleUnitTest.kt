@@ -1,4 +1,4 @@
-package com.google.aiedge.examples.object_detection
+package com.projektarbeit
 
 import org.junit.Assert
 import org.junit.Test
