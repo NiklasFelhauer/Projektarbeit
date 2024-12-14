@@ -10,25 +10,9 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.camera.core.ImageProxy
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.BottomSheetScaffold
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -46,21 +30,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.projektarbeit.home.MQTT.MqttScreen
 import com.projektarbeit.home.camera.CameraScreen
-import com.projektarbeit.home.gallery.GalleryScreen
-import com.projektarbeit.objectdetector.ObjectDetectorHelper
 import com.projektarbeit.ui.ApplicationTheme
 import com.projektarbeit.ui.darkBlue
 import com.projektarbeit.ui.logo_background
-import com.projektarbeit.ui.teal
-import com.projektarbeit.ui.white
-import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.P)
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val viewModel: MainViewModel by viewModels { MainViewModel.getFactory(this) }
@@ -79,149 +57,19 @@ class MainActivity : ComponentActivity() {
             }
 
             ApplicationTheme {
-                BottomSheetScaffold(
-                    sheetPeekHeight = 70.dp,
-                    sheetContent = {
-                        BottomSheet(uiState = uiState,
-                            onDelegateSelected = {
-                                viewModel.setDelegate(it)
-                            },
-                            onThresholdSet = {
-                                viewModel.setThreshold(it)
-                            },
-                            onMaxResultSet = {
-                                viewModel.setNumberOfResult(it)
-                            })
-                    }) {
-                    Column {
-                        Header()
-                        Content(
-                            uiState = uiState, tab = tabState,
-                            onTabChanged = {
-                                tabState = it
-                                viewModel.stopDetect()
-                            },
-                            onMediaPicked = {
-                                viewModel.stopDetect()
-                            },
-                            onImageProxyAnalyzed = { imageProxy ->
-                                viewModel.detectImageObject(imageProxy)
-                            },
-                            onImageBitMapAnalyzed = { bitmap, degrees ->
-                                viewModel.detectImageObject(bitmap, degrees)
-                            },
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    @Composable
-    fun BottomSheet(
-        uiState: UiState,
-        modifier: Modifier = Modifier,
-        onDelegateSelected: (ObjectDetectorHelper.Delegate) -> Unit,
-        onThresholdSet: (value: Float) -> Unit,
-        onMaxResultSet: (value: Int) -> Unit,
-    ) {
-        val inferenceTime = uiState.detectionResult?.inferenceTime
-        val threshold = uiState.setting.threshold
-        val resultCount = uiState.setting.resultCount
-        Column(modifier = modifier.padding(horizontal = 20.dp)) {
-            Row {
-                Text(modifier = Modifier.weight(0.5f), text = "Inference Time")
-                Text(text = inferenceTime?.toString() ?: "-")
-            }
-            Spacer(modifier = Modifier.height(20.dp))
-            AdjustItem(
-                name = "Threshold",
-                value = threshold,
-                onMinusClicked = {
-                    if (threshold > 0.3f) {
-                        val newThreshold = (threshold - 0.1f).coerceAtLeast(0.3f)
-                        onThresholdSet(newThreshold)
-                    }
-                },
-                onPlusClicked = {
-                    if (threshold < 0.8f) {
-                        val newThreshold = threshold + 0.1f.coerceAtMost(0.8f)
-                        onThresholdSet(newThreshold)
-                    }
-                },
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            AdjustItem(
-                name = "Max Results",
-                value = uiState.setting.resultCount,
-                onMinusClicked = {
-                    if (resultCount >= 2) {
-                        val count = resultCount - 1
-                        onMaxResultSet(count)
-                    }
-                },
-                onPlusClicked = {
-                    if (resultCount < 5) {
-                        val count = resultCount + 1
-                        onMaxResultSet(count)
-                    }
-                },
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            OptionMenu(
-                label = "Delegate",
-                options = ObjectDetectorHelper.Delegate.entries.map { it.name }) {
-                onDelegateSelected(ObjectDetectorHelper.Delegate.valueOf(it))
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-        }
-    }
-
-    @Composable
-    fun OptionMenu(
-        label: String,
-        modifier: Modifier = Modifier,
-        options: List<String>,
-        onOptionSelected: (option: String) -> Unit,
-    ) {
-        var expanded by remember { mutableStateOf(false) }
-        var option by remember { mutableStateOf(options.first()) }
-        Row(
-            modifier = modifier, verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(modifier = Modifier.weight(0.5f), text = label, fontSize = 15.sp)
-            Box {
-                Row(
-                    modifier = Modifier.clickable {
-                        expanded = true
-                    }, verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = option, fontSize = 15.sp)
-                    Spacer(modifier = Modifier.width(5.dp))
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Localized description"
+                Column {
+                    Header()
+                    Content(
+                        uiState = uiState,
+                        tab = tabState,
+                        onTabChanged = {
+                            tabState = it
+                            viewModel.stopDetect()
+                        },
+                        onImageProxyAnalyzed = { imageProxy ->
+                            viewModel.detectImageObject(imageProxy)
+                        },
                     )
-                }
-
-                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                    options.forEach {
-                        DropdownMenuItem(
-                            text = {
-                                Text(it, fontSize = 15.sp)
-                            },
-                            onClick = {
-                                option = it
-                                onOptionSelected(option)
-                                expanded = false
-                            },
-                        )
-                    }
                 }
             }
         }
@@ -252,16 +100,19 @@ class MainActivity : ComponentActivity() {
         tab: Tab,
         modifier: Modifier = Modifier,
         onTabChanged: (Tab) -> Unit,
-        onMediaPicked: () -> Unit,
         onImageProxyAnalyzed: (ImageProxy) -> Unit,
-        onImageBitMapAnalyzed: (Bitmap, Int) -> Unit,
     ) {
-        val tabs = Tab.entries
+        val tabs = listOf(Tab.Camera, Tab.Mqtt) // Zwei Tabs
         Column(modifier) {
             TabRow(containerColor = darkBlue, selectedTabIndex = tab.ordinal) {
                 tabs.forEach { t ->
                     Tab(
-                        text = { Text(t.name, color = Color.White) },
+                        text = {
+                            Text(
+                                text = t.name,
+                                color = if (tab == t) Color.Cyan else Color.White,
+                                textAlign = TextAlign.Center
+                            ) },
                         selected = tab == t,
                         onClick = { onTabChanged(t) },
                     )
@@ -276,65 +127,12 @@ class MainActivity : ComponentActivity() {
                     },
                 )
 
-                Tab.Gallery -> GalleryScreen(
-                    modifier = Modifier.fillMaxSize(),
-                    uiState = uiState,
-                    onMediaPicked = onMediaPicked,
-                    onImageAnalyzed = {
-                        onImageBitMapAnalyzed(it, 0)
-                    },
-                )
-            }
-        }
-    }
-
-    @Composable
-    fun AdjustItem(
-        name: String,
-        value: Number,
-        modifier: Modifier = Modifier,
-        onMinusClicked: () -> Unit,
-        onPlusClicked: () -> Unit,
-    ) {
-        Row(
-            modifier = modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                modifier = Modifier.weight(0.5f),
-                text = name,
-                fontSize = 15.sp,
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Button(
-                    onClick = {
-                        onMinusClicked()
-                    }) {
-                    Text(text = "-", fontSize = 15.sp)
-                }
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    modifier = Modifier.width(30.dp),
-                    textAlign = TextAlign.Center,
-                    text = if (value is Float) String.format(
-                        Locale.US, "%.1f", value
-                    ) else value.toString(),
-                    fontSize = 15.sp,
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Button(
-                    onClick = {
-                        onPlusClicked()
-                    }) {
-                    Text(text = "+", fontSize = 15.sp)
-                }
+                Tab.Mqtt -> MqttScreen()
             }
         }
     }
 
     enum class Tab {
-        Camera, Gallery,
+        Camera, Mqtt
     }
 }
