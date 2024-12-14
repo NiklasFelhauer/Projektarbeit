@@ -1,4 +1,3 @@
-// Datei: MqttScreen.kt
 package com.projektarbeit.home.MQTT
 
 import androidx.compose.foundation.layout.Arrangement

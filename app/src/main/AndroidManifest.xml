@@ -8,8 +8,8 @@
     <!-- Declare permissions -->
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- Declare permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
-
 
     <application
         android:allowBackup="true"
