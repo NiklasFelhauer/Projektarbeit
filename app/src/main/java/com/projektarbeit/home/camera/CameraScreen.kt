@@ -78,11 +78,11 @@ fun CameraScreen(
             })
         if (uiState.detectionResult != null) {
             ResultsOverlay(
-                result = uiState.detectionResult
+                result = uiState.detectionResult,
+                mqttData = uiState.mqttData // MQTT-Daten übergeben
             )
         }
     }
-
 }
 
 @Composable

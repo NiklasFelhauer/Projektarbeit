@@ -13,33 +13,26 @@ import com.projektarbeit.config.MODEL
 import com.projektarbeit.config.THRESHOLD
 import com.projektarbeit.objectdetector.ObjectDetectorHelper
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import org.json.JSONException
+import org.json.JSONObject
 
 class MainViewModel(private val objectDetectorHelper: ObjectDetectorHelper) : ViewModel() {
     companion object {
         fun getFactory(context: Context) = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                // Initialisiere ObjectDetectorHelper mit den Konstanten aus Config.kt
-                val objectDetectorHelper = ObjectDetectorHelper(
-                    context = context,
-                    threshold = THRESHOLD,
-                    maxResults = MAX_RESULTS,
-                    delegate = DELEGATE,
-                    model = MODEL
-                ).apply {
-                    // Stelle den Object Detector mit den statischen Einstellungen ein
-                    runBlocking {
-                        setupObjectDetector()
-                    }
+                if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+                    val objectDetectorHelper = ObjectDetectorHelper(
+                        context = context,
+                        threshold = THRESHOLD,
+                        maxResults = MAX_RESULTS,
+                        delegate = DELEGATE,
+                        model = MODEL
+                    )
+                    return MainViewModel(objectDetectorHelper) as T
                 }
-                return MainViewModel(objectDetectorHelper) as T
+                throw IllegalArgumentException("Unknown ViewModel class")
             }
         }
     }
@@ -47,33 +40,63 @@ class MainViewModel(private val objectDetectorHelper: ObjectDetectorHelper) : Vi
     private var detectJob: Job? = null
 
     private val detectionResult =
-        MutableStateFlow<ObjectDetectorHelper.DetectionResult?>(null).also {
+        MutableStateFlow<ObjectDetectorHelper.DetectionResult?>(null).also { flow ->
             viewModelScope.launch {
-                objectDetectorHelper.detectionResult.collect(it)
+                objectDetectorHelper.detectionResult.collect { flow.value = it }
             }
         }
 
-    private val errorMessage = MutableStateFlow<Throwable?>(null).also {
+    private val errorMessage = MutableStateFlow<Throwable?>(null).also { flow ->
         viewModelScope.launch {
-            objectDetectorHelper.error.collect(it)
+            objectDetectorHelper.error.collect { flow.value = it }
         }
     }
 
+    // Neuer StateFlow für MQTT-Daten
+    private val _mqttData = MutableStateFlow<Map<String, Float>>(emptyMap())
+    val mqttData: StateFlow<Map<String, Float>> = _mqttData
+
+    init {
+        // Initialisieren Sie das ObjectDetectorHelper
+        viewModelScope.launch {
+            objectDetectorHelper.setupObjectDetector()
+        }
+
+        // MQTT-Daten sammeln und parsen
+        viewModelScope.launch {
+            MQTTManager.mqttMessageState.collect { message ->
+                message?.let {
+                    try {
+                        val json = JSONObject(it)
+                        val map = mutableMapOf<String, Float>()
+                        val keys = json.keys()
+                        while (keys.hasNext()) {
+                            val key = keys.next()
+                            val value = json.getDouble(key).toFloat()
+                            map[key] = value
+                        }
+                        _mqttData.value = map
+                    } catch (e: JSONException) {
+                        errorMessage.emit(e) // Korrigiert von _error.emit(e) zu errorMessage.emit(e)
+                    }
+                }
+            }
+        }
+    }
+
+    // Kombinierter UiState, der auch MQTT-Daten enthält
     val uiState: StateFlow<UiState> = combine(
         detectionResult,
-        errorMessage
-    ) { result, error ->
+        errorMessage,
+        _mqttData
+    ) { result, error, mqttData ->
         UiState(
             detectionResult = result,
-            errorMessage = error?.message
+            errorMessage = error?.message,
+            mqttData = mqttData
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
 
-    /**
-     *  Start detect object from an image.
-     *  @param bitmap Tries to make a new bitmap based on the dimensions of this bitmap,
-     *  @param rotationDegrees to correct the rotationDegrees during segmentation
-     */
     fun detectImageObject(bitmap: Bitmap, rotationDegrees: Int) {
         detectJob = viewModelScope.launch {
             objectDetectorHelper.detect(bitmap, rotationDegrees)
@@ -87,7 +110,6 @@ class MainViewModel(private val objectDetectorHelper: ObjectDetectorHelper) : Vi
         }
     }
 
-    /** Stop current detection */
     fun stopDetect() {
         viewModelScope.launch {
             detectionResult.emit(null)
@@ -95,7 +117,6 @@ class MainViewModel(private val objectDetectorHelper: ObjectDetectorHelper) : Vi
         }
     }
 
-    /** Clear error message after it has been consumed*/
     fun errorMessageShown() {
         errorMessage.update { null }
     }

@@ -12,19 +12,8 @@ import androidx.camera.core.ImageProxy
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,7 +30,6 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Entferne die Initialisierung des MainViewModel, da sie hier nicht verwendet wird
         setContent {
             val viewModel: MainViewModel by viewModels { MainViewModel.getFactory(this) }
             val uiState by viewModel.uiState.collectAsState()
@@ -113,7 +101,8 @@ class MainActivity : ComponentActivity() {
                                 text = t.name,
                                 color = if (tab == t) Color.Cyan else Color.White,
                                 textAlign = TextAlign.Center
-                            ) },
+                            )
+                        },
                         selected = tab == t,
                         onClick = { onTabChanged(t) },
                     )
@@ -123,8 +112,8 @@ class MainActivity : ComponentActivity() {
             when (tab) {
                 Tab.Camera -> CameraScreen(
                     uiState = uiState,
-                    onImageAnalyzed = {
-                        onImageProxyAnalyzed(it)
+                    onImageAnalyzed = { imageProxy ->
+                        onImageProxyAnalyzed(imageProxy)
                     },
                 )
 
