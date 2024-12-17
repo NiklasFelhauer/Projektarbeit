@@ -13,19 +13,23 @@ import com.projektarbeit.MqttViewModel
 
 @Composable
 fun MqttScreen(mqttViewModel: MqttViewModel = viewModel()) {
-    // Starte die Verbindung und das Abonnieren, wenn der Bildschirm angezeigt wird
-    LaunchedEffect(Unit) {
-        mqttViewModel.connectAndSubscribe()
-    }
-
-    // Beobachte die mqttMessageState vom ViewModel
+    // Beobachte die mqttMessageState und connectionState vom ViewModel
     val message by mqttViewModel.mqttMessageState.collectAsState()
+    val connectionStatus by mqttViewModel.connectionState.collectAsState()
 
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = message, fontSize = 20.sp)
+        // Optional: Anzeige des Verbindungsstatus, wenn gewünscht
+        connectionStatus?.let {
+            Text(text = it, fontSize = 14.sp, color = androidx.compose.ui.graphics.Color.Gray)
+        }
+
+        // Anzeige der MQTT-Nachrichten
+        message?.let {
+            Text(text = it, fontSize = 20.sp)
+        }
     }
 }

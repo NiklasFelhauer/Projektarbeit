@@ -20,6 +20,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,7 +31,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.projektarbeit.home.MQTT.MqttScreen
 import com.projektarbeit.home.camera.CameraScreen
 import com.projektarbeit.ui.ApplicationTheme
@@ -41,9 +41,10 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val viewModel: MainViewModel by viewModels { MainViewModel.getFactory(this) }
+        // Entferne die Initialisierung des MainViewModel, da sie hier nicht verwendet wird
         setContent {
-            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val viewModel: MainViewModel by viewModels { MainViewModel.getFactory(this) }
+            val uiState by viewModel.uiState.collectAsState()
 
             var tabState by remember { mutableStateOf(Tab.Camera) }
 
