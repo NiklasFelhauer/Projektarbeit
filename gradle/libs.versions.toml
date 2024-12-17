@@ -15,6 +15,7 @@ orgEclipsePahoAndroidService = "1.1.1"
 orgEclipsePahoClientMqttv3 = "1.2.5"
 undercouchDownload = "5.6.0"
 litert = "1.0.0"
+gson = "2.10.1" # Aktuellste Version zum Zeitpunkt der Erstellung
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
@@ -41,6 +42,8 @@ androidx-camera-core = { group = "androidx.camera", name = "camera-core", versio
 androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "cameraCore" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "cameraCore" }
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraCore" }
+
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 
 litert = { group = "com.google.ai.edge.litert", name = "litert", version.ref = "litert" }
 litert-support = { group = "com.google.ai.edge.litert", name = "litert-support", version.ref = "litert" }

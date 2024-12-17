@@ -88,4 +88,7 @@ dependencies {
     // Paho MQTT
     implementation(libs.org.eclipse.paho.client.mqttv3)
     implementation(libs.org.eclipse.paho.android.service)
+
+    // GSON
+    implementation(libs.gson)
 }

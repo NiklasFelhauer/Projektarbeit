@@ -6,7 +6,9 @@ class MyApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        // Initialisiere die MQTT-Verbindung beim Start der App
+        // Initialisiere den MQTTManager mit dem Application Context
+        MQTTManager.initialize(this)
+        // Initialisiere die MQTT-Verbindung
         MQTTManager.connect()
     }
 
